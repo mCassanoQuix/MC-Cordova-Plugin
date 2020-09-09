@@ -36,6 +36,10 @@ import com.salesforce.marketingcloud.MarketingCloudSdk;
 import com.salesforce.marketingcloud.UrlHandler;
 import com.salesforce.marketingcloud.notifications.NotificationManager;
 import com.salesforce.marketingcloud.notifications.NotificationMessage;
+
+import java.io.FileNotFoundException;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.Collection;
 import java.util.Map;
 import org.apache.cordova.CallbackContext;
@@ -238,6 +242,14 @@ public class MCCordovaPlugin extends CordovaPlugin implements UrlHandler {
 
     private ActionHandler getActionHandler(String action) {
         switch (action) {
+            case "init":
+                return init();
+            case "requestPushPermission":
+                return requestPushPermission();
+            case "enableLocation":
+                return enableLocation();
+            case "disableLocation":
+                return disableLocation();
             case "getSystemToken":
                 return getSystemToken();
             case "isPushEnabled":
@@ -267,6 +279,58 @@ public class MCCordovaPlugin extends CordovaPlugin implements UrlHandler {
             default:
                 return null;
         }
+    }
+
+    private ActionHandler init() {
+        Context ctx = this.cordova.getActivity().getApplicationContext();
+        return new ActionHandler() {
+            @Override
+            public void execute(MarketingCloudSdk sdk, JSONArray args, CallbackContext callbackContext) {
+                try {
+                    JSONObject obj = args.getJSONObject(0);
+                    OutputStreamWriter outputStreamWriter = new OutputStreamWriter(ctx.openFileOutput("mc_config.json", Context.MODE_PRIVATE));
+                    outputStreamWriter.write(obj.toString());
+                    outputStreamWriter.close();
+                    callbackContext.success();
+                } catch (FileNotFoundException e) {
+                    Log.e("Exception", "File write failed: " + e.toString());
+                } catch (IOException e) {
+                    Log.e("Exception", "File write failed: " + e.toString());
+                } catch (JSONException e) {
+                    Log.e("Exception", "File write failed: " + e.toString());
+                }
+            }
+        };
+    }
+
+    private ActionHandler requestPushPermission() {
+        return new ActionHandler() {
+            @Override
+            public void execute(MarketingCloudSdk sdk, JSONArray args, CallbackContext callbackContext) {
+                // No prompt for Android
+                callbackContext.success();
+            }
+        };
+    }
+
+    private ActionHandler enableLocation() {
+        return new ActionHandler() {
+            @Override
+            public void execute(MarketingCloudSdk sdk, JSONArray args, CallbackContext callbackContext) {
+                // No prompt for Android
+                callbackContext.success();
+            }
+        };
+    }
+
+    private ActionHandler disableLocation() {
+        return new ActionHandler() {
+            @Override
+            public void execute(MarketingCloudSdk sdk, JSONArray args, CallbackContext callbackContext) {
+                // No prompt for Android
+                callbackContext.success();
+            }
+        };
     }
 
     private ActionHandler getContactKey() {

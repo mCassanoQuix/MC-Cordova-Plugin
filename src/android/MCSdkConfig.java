@@ -35,8 +35,16 @@ import androidx.annotation.Nullable;
 import com.google.firebase.FirebaseApp;
 import com.salesforce.marketingcloud.MarketingCloudConfig;
 import com.salesforce.marketingcloud.notifications.NotificationCustomizationOptions;
+
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
 import java.io.IOException;
+import java.io.InputStream;
+import java.io.InputStreamReader;
 import java.util.Locale;
+
+import org.json.JSONException;
+import org.json.JSONObject;
 import org.xmlpull.v1.XmlPullParser;
 import org.xmlpull.v1.XmlPullParserException;
 
@@ -45,8 +53,50 @@ public class MCSdkConfig {
 
     private MCSdkConfig() {}
 
+    private static String readFromFile(Context context) {
+
+        String ret = "";
+
+        try {
+            InputStream inputStream = context.openFileInput("mc_config.json");
+
+            if ( inputStream != null ) {
+                InputStreamReader inputStreamReader = new InputStreamReader(inputStream);
+                BufferedReader bufferedReader = new BufferedReader(inputStreamReader);
+                String receiveString = "";
+                StringBuilder stringBuilder = new StringBuilder();
+
+                while ( (receiveString = bufferedReader.readLine()) != null ) {
+                    stringBuilder.append(receiveString);
+                }
+
+                inputStream.close();
+                ret = stringBuilder.toString();
+            }
+        }
+        catch (FileNotFoundException e) {
+            Log.e("login activity", "File not found: " + e.toString());
+        } catch (IOException e) {
+            Log.e("login activity", "Can not read file: " + e.toString());
+        }
+
+        return ret;
+    }
+
     @Nullable
     public static MarketingCloudConfig.Builder prepareConfigBuilder(Context context) {
+        // Read mc_config.json
+        String mcConfig = readFromFile(context);
+        if (!mcConfig.isEmpty()) {
+            try {
+                JSONObject config = new JSONObject(mcConfig);
+                return parseJSONConfig(context, config);
+            } catch (JSONException e) {
+                Log.e(TAG, "Unable to load mc_config.xml", e);
+            }
+        }
+
+        // Read config.xml
         Resources res = context.getResources();
         int configId = res.getIdentifier("config", "xml", context.getPackageName());
 
@@ -121,6 +171,37 @@ public class MCSdkConfig {
                     "Unable to retrieve sender id.  Push messages will not work for Marketing Cloud.",
                     e);
             }
+        }
+
+        return builder;
+    }
+
+    static MarketingCloudConfig.Builder parseJSONConfig(Context context, JSONObject config) {
+        MarketingCloudConfig.Builder builder = MarketingCloudConfig.builder();
+        boolean senderIdSet = false;
+        try {
+            builder.setApplicationId(config.getString("app_id"));
+            builder.setAccessToken(config.getString("access_token"));
+            builder.setMarketingCloudServerUrl(config.getString("tenant_specific_endpoint"));
+            builder.setAnalyticsEnabled("true".equalsIgnoreCase(config.getString("analytics")));
+            builder.setDelayRegistrationUntilContactKeyIsSet("true".equalsIgnoreCase(config.getString("delay_registration_until_contact_key_is_set")));
+            builder.setGeofencingEnabled("true".equalsIgnoreCase(config.getString("location_enabled")));
+
+            int notifId = context.getResources().getIdentifier(config.getString("notification_small_icon"), "drawable", context.getPackageName());
+            if (notifId != 0) {
+                builder.setNotificationCustomizationOptions(NotificationCustomizationOptions.create(notifId));
+            }
+
+        } catch (JSONException e) {
+
+            Log.e(TAG, "Unable to read mc_config.json.", e);
+
+        }
+
+        try {
+            builder.setSenderId(FirebaseApp.getInstance().getOptions().getGcmSenderId());
+        } catch (Exception e) {
+            Log.e(TAG, "Unable to retrieve sender id.  Push messages will not work for Marketing Cloud.", e);
         }
 
         return builder;

@@ -66,6 +66,68 @@ function _exec(successCallback, errorCallback, methodName, args) {
  * @exports MCCordovaPlugin
  */
 var MCCordovaPlugin = {
+
+    /**
+     * Initialize the Marketing Cloud SDK programmatically
+     * @param {Object} config 
+     * @param {function} successCallback 
+     * @param {function} [errorCallback]
+     * @see  {@link https://salesforce-marketingcloud.github.io/MarketingCloudSDK-Android/javadocs/6.0/reference/com/salesforce/marketingcloud/MarketingCloudConfig.Builder.html|Android Docs}
+     * @see  {@link https://salesforce-marketingcloud.github.io/MarketingCloudSDK-iOS/appledoc/Classes/MarketingCloudSDK.html#//api/name/sfmc_configureWithDictionary:error:|iOS Docs}
+     */
+    init: function(config, successCallback, errorCallback = undefined) {
+        argsCheck.checkArgs('ofF', `${PLUGIN_NAME}.init`, arguments);
+        _exec(successCallback, errorCallback, 'init', [config]);
+    },
+
+    /**
+     * Request the user permission (iOS only)
+     * @param {function} successCallback 
+     * @param {function} [errorCallback]
+     */
+    requestPushPermission: function(successCallback, errorCallback) {
+        argsCheck.checkArgs('fF', `${PLUGIN_NAME}.requestPushPermission`, arguments);
+        _exec(successCallback, errorCallback, 'requestPushPermission');
+    },
+
+    /**
+     * Enable location
+     * @param  {function(enabled)} successCallback
+     * @param  {function} [errorCallback]
+     * @see  {@link https://salesforce-marketingcloud.github.io/MarketingCloudSDK-Android/javadocs/7.0/reference/com/salesforce/marketingcloud/messages/push/PushMessageManager.html#isPushEnabled()|Android Docs}
+     * @see  {@link https://salesforce-marketingcloud.github.io/MarketingCloudSDK-iOS/appledoc/Classes/MarketingCloudSDK.html#//api/name/sfmc_locationEnabled|iOS Docs}
+     */
+    enableLocation: function(successCallback, errorCallback) {
+        argsCheck.checkArgs('FF', `${PLUGIN_NAME}.enableLocation`, arguments);
+        _exec(successCallback, errorCallback, 'enableLocation');
+    },
+
+    /**
+     * Disable location
+     * @param  {function(enabled)} successCallback
+     * @param  {function} [errorCallback]
+     * @see  {@link https://salesforce-marketingcloud.github.io/MarketingCloudSDK-Android/javadocs/7.0/reference/com/salesforce/marketingcloud/messages/push/PushMessageManager.html#isPushEnabled()|Android Docs}
+     * @see  {@link https://salesforce-marketingcloud.github.io/MarketingCloudSDK-iOS/appledoc/Classes/MarketingCloudSDK.html#//api/name/sfmc_locationEnabled|iOS Docs}
+     */
+    disableLocation: function(successCallback, errorCallback) {
+        argsCheck.checkArgs('FF', `${PLUGIN_NAME}.disableLocation`, arguments);
+        _exec(successCallback, errorCallback, 'disableLocation');
+    },
+
+    /**
+     * The current state of the location flag in the native Marketing Cloud
+     * SDK.
+     * @param  {function(enabled)} successCallback
+     * @param  {boolean} successCallback.enabled - Whether location is enabled.
+     * @param  {function} [errorCallback]
+     * @see  {@link https://salesforce-marketingcloud.github.io/MarketingCloudSDK-Android/javadocs/7.0/reference/com/salesforce/marketingcloud/messages/push/PushMessageManager.html#isPushEnabled()|Android Docs}
+     * @see  {@link https://salesforce-marketingcloud.github.io/MarketingCloudSDK-iOS/appledoc/Classes/MarketingCloudSDK.html#//api/name/sfmc_locationEnabled|iOS Docs}
+     */
+    isLocationEnabled: function(successCallback, errorCallback) {
+        argsCheck.checkArgs('FF', `${PLUGIN_NAME}.isLocationEnabled`, arguments);
+        _exec(successCallback, errorCallback, 'isLocationEnabled');
+    },
+
     /**
      * The current state of the pushEnabled flag in the native Marketing Cloud
      * SDK.

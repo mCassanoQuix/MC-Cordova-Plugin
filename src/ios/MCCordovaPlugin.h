@@ -32,6 +32,12 @@
 
 @interface MCCordovaPlugin : CDVPlugin <MarketingCloudSDKURLHandlingDelegate>
 
+- (void)init:(CDVInvokedUrlCommand *)command;
+- (void)requestPushPermission:(CDVInvokedUrlCommand *)command;
+- (void)enableLocation:(CDVInvokedUrlCommand *)command;
+- (void)disableLocation:(CDVInvokedUrlCommand *)command;
+- (void)isLocationEnabled:(CDVInvokedUrlCommand *)command;
+
 - (void)enableVerboseLogging:(CDVInvokedUrlCommand *)command;
 - (void)disableVerboseLogging:(CDVInvokedUrlCommand *)command;
 - (void)logSdkState:(CDVInvokedUrlCommand *)command;
@@ -59,5 +65,6 @@
 @property(nonatomic, assign) BOOL notificationOpenedSubscribed;
 @property(nonatomic, strong) NSDictionary *cachedNotification;
 @property(nonatomic, strong) os_log_t logger;
+@property(nonatomic, assign) BOOL initialized;
 
 @end

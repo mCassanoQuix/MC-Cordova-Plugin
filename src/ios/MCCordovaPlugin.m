@@ -34,6 +34,7 @@ const int LOG_LENGTH = 800;
 @synthesize eventsCallbackId;
 @synthesize notificationOpenedSubscribed;
 @synthesize cachedNotification;
+@synthesize initialized;
 
 + (NSMutableDictionary *_Nullable)dataForNotificationReceived:(NSNotification *)notification {
     NSMutableDictionary *notificationData = nil;
@@ -119,30 +120,43 @@ const int LOG_LENGTH = 800;
 }
 
 - (void)pluginInitialize {
+    self.initialized = NO;
+}
+
+- (void)init:(CDVInvokedUrlCommand *)command {
     if ([MarketingCloudSDK sharedInstance] == nil) {
         // failed to access the MarketingCloudSDK
         os_log_error(OS_LOG_DEFAULT, "Failed to access the MarketingCloudSDK");
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:@"Failed to access the MarketingCloudSDK"];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
     } else {
-        NSDictionary *pluginSettings = self.commandDelegate.settings;
+        NSDictionary *pluginSettings = (NSDictionary *)command.arguments[0];
 
         MarketingCloudSDKConfigBuilder *configBuilder = [MarketingCloudSDKConfigBuilder new];
         [configBuilder
-            sfmc_setApplicationId:pluginSettings[@"com.salesforce.marketingcloud.app_id"]];
+            sfmc_setApplicationId:pluginSettings[@"app_id"]];
         [configBuilder
-            sfmc_setAccessToken:pluginSettings[@"com.salesforce.marketingcloud.access_token"]];
+            sfmc_setAccessToken:pluginSettings[@"access_token"]];
 
-        BOOL analytics = [pluginSettings[@"com.salesforce.marketingcloud.analytics"] boolValue];
+        BOOL analytics = [pluginSettings[@"analytics"] boolValue];
         [configBuilder sfmc_setAnalyticsEnabled:@(analytics)];
 
         BOOL delayRegistrationUntilContactKeyIsSet = [pluginSettings
-                [@"com.salesforce.marketingcloud.delay_registration_until_contact_key_is_set"]
+                [@"delay_registration_until_contact_key_is_set"]
             boolValue];
         [configBuilder
             sfmc_setDelayRegistrationUntilContactKeyIsSet:@(delayRegistrationUntilContactKeyIsSet)];
 
-        NSString *tse = pluginSettings[@"com.salesforce.marketingcloud.tenant_specific_endpoint"];
+        NSString *tse = pluginSettings[@"tenant_specific_endpoint"];
         if (tse != nil) {
             [configBuilder sfmc_setMarketingCloudServerUrl:tse];
+        }
+        
+        BOOL locationEnabled = [pluginSettings[@"location_enabled"] boolValue];
+        [configBuilder sfmc_setLocationEnabled:@(locationEnabled)];
+        
+        if (self.initialized == YES) {
+            [[MarketingCloudSDK sharedInstance] sfmc_tearDown];
         }
 
         NSError *configError = nil;
@@ -152,7 +166,6 @@ const int LOG_LENGTH = 800;
             [self setDelegate];
             [[MarketingCloudSDK sharedInstance] sfmc_setURLHandlingDelegate:self];
             [[MarketingCloudSDK sharedInstance] sfmc_addTag:@"Cordova"];
-            [self requestPushPermission];
         } else if (configError != nil) {
             os_log_debug(OS_LOG_DEFAULT, "%@", configError);
             if (configError.code == configureInvalidAppEndpointError) {
@@ -165,37 +178,44 @@ const int LOG_LENGTH = 800;
             }
         }
 
-        [[NSNotificationCenter defaultCenter]
-            addObserverForName:SFMCFoundationUNNotificationReceivedNotification
-                        object:nil
-                         queue:[NSOperationQueue mainQueue]
-                    usingBlock:^(NSNotification *_Nonnull note) {
-                      NSMutableDictionary *userInfo =
-                          [MCCordovaPlugin dataForNotificationReceived:note];
-                      if (userInfo != nil) {
-                          NSString *url = nil;
-                          NSString *type = nil;
-                          if ((url = userInfo[@"_od"])) {
-                              type = @"openDirect";
-                          } else if ((url = userInfo[@"_x"])) {
-                              type = @"cloudPage";
-                          } else {
-                              type = @"other";
-                          }
+        if (self.initialized == NO) {
+            [[NSNotificationCenter defaultCenter]
+                addObserverForName:SFMCFoundationUNNotificationReceivedNotification
+                            object:nil
+                             queue:[NSOperationQueue mainQueue]
+                        usingBlock:^(NSNotification *_Nonnull note) {
+                          NSMutableDictionary *userInfo =
+                              [MCCordovaPlugin dataForNotificationReceived:note];
+                          if (userInfo != nil) {
+                              NSString *url = nil;
+                              NSString *type = nil;
+                              if ((url = userInfo[@"_od"])) {
+                                  type = @"openDirect";
+                              } else if ((url = userInfo[@"_x"])) {
+                                  type = @"cloudPage";
+                              } else {
+                                  type = @"other";
+                              }
 
-                          if (url != nil) {
-                              [userInfo setValue:url forKey:@"url"];
-                          }
-                          [userInfo setValue:type forKey:@"type"];
+                              if (url != nil) {
+                                  [userInfo setValue:url forKey:@"url"];
+                              }
+                              [userInfo setValue:type forKey:@"type"];
 
-                          [self sendNotificationEvent:@{
-                              @"timeStamp" :
-                                  @((long)([[NSDate date] timeIntervalSince1970] * 1000)),
-                              @"values" : userInfo,
-                              @"type" : @"notificationOpened"
-                          }];
-                      }
-                    }];
+                              [self sendNotificationEvent:@{
+                                  @"timeStamp" :
+                                      @((long)([[NSDate date] timeIntervalSince1970] * 1000)),
+                                  @"values" : userInfo,
+                                  @"type" : @"notificationOpened"
+                              }];
+                          }
+                        }];
+        }
+
+        self.initialized = YES;
+                    
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
     }
 }
 
@@ -210,6 +230,24 @@ const int LOG_LENGTH = 800;
     }
 }
 
+- (void)isLocationEnabled:(CDVInvokedUrlCommand *)command {
+    BOOL enabled = [[MarketingCloudSDK sharedInstance] sfmc_watchingLocation];
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:enabled];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (void)enableLocation:(CDVInvokedUrlCommand *)command {
+    [[MarketingCloudSDK sharedInstance] sfmc_startWatchingLocation];
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
+- (void)disableLocation:(CDVInvokedUrlCommand *)command {
+    [[MarketingCloudSDK sharedInstance] sfmc_stopWatchingLocation];
+    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK];
+    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+}
+
 - (void)setDelegate {
 #pragma clang diagnostic push
 #pragma clang diagnostic ignored "-Wundeclared-selector"
@@ -222,25 +260,31 @@ const int LOG_LENGTH = 800;
 #pragma clang diagnostic pop
 }
 
-- (void)requestPushPermission {
+- (void)requestPushPermission:(CDVInvokedUrlCommand *)command {
     if (@available(iOS 10, *)) {
         [[UNUserNotificationCenter currentNotificationCenter]
             requestAuthorizationWithOptions:UNAuthorizationOptionAlert |
                                             UNAuthorizationOptionSound | UNAuthorizationOptionBadge
                           completionHandler:^(BOOL granted, NSError *_Nullable error) {
-                            if (granted) {
+                            if (error != nil) {
+                                os_log_debug(OS_LOG_DEFAULT, "%@", error);
+                                CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_ERROR messageAsString:error.localizedDescription];
+                                [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
+                            } else if (granted) {
                                 os_log_info(OS_LOG_DEFAULT, "Authorized for notifications = %s",
                                             granted ? "YES" : "NO");
 
                                 dispatch_async(dispatch_get_main_queue(), ^{
-                                  // we are authorized to use
-                                  // notifications, request a device
-                                  // token for remote notifications
-                                  [[UIApplication sharedApplication]
-                                      registerForRemoteNotifications];
+                                    // we are authorized to use
+                                    // notifications, request a device
+                                    // token for remote notifications
+                                    [[UIApplication sharedApplication] registerForRemoteNotifications];
+                                    CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:granted];
+                                    [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
                                 });
-                            } else if (error != nil) {
-                                os_log_debug(OS_LOG_DEFAULT, "%@", error);
+                            } else {
+                                CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:granted];
+                                [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
                             }
                           }];
     } else {
@@ -250,6 +294,8 @@ const int LOG_LENGTH = 800;
                   categories:nil];
         [[UIApplication sharedApplication] registerUserNotificationSettings:settings];
         [[UIApplication sharedApplication] registerForRemoteNotifications];
+        CDVPluginResult *result = [CDVPluginResult resultWithStatus:CDVCommandStatus_OK messageAsBool:YES];
+        [self.commandDelegate sendPluginResult:result callbackId:command.callbackId];
     }
 }
 
