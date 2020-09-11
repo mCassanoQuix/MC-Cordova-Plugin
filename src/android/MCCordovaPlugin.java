@@ -308,7 +308,7 @@ public class MCCordovaPlugin extends CordovaPlugin implements UrlHandler {
             @Override
             public void execute(MarketingCloudSdk sdk, JSONArray args, CallbackContext callbackContext) {
                 // No prompt for Android
-                callbackContext.success();
+                callbackContext.success(1);
             }
         };
     }
@@ -317,8 +317,13 @@ public class MCCordovaPlugin extends CordovaPlugin implements UrlHandler {
         return new ActionHandler() {
             @Override
             public void execute(MarketingCloudSdk sdk, JSONArray args, CallbackContext callbackContext) {
-                // No prompt for Android
-                callbackContext.success();
+                try {
+                    sdk.getRegionMessageManager().enableGeofenceMessaging();
+                    callbackContext.success();
+                } catch (SecurityException e) {
+                    Log.e("Exception", "User location permission not granted: " + e.toString());
+                    callbackContext.error(e.toString());
+                }
             }
         };
     }
@@ -327,7 +332,13 @@ public class MCCordovaPlugin extends CordovaPlugin implements UrlHandler {
         return new ActionHandler() {
             @Override
             public void execute(MarketingCloudSdk sdk, JSONArray args, CallbackContext callbackContext) {
-                // No prompt for Android
+                try {
+                    sdk.getRegionMessageManager().disableGeofenceMessaging();
+                    callbackContext.success();
+                } catch (SecurityException e) {
+                    Log.e("Exception", "User location permission not granted: " + e.toString());
+                    callbackContext.error(e.toString());
+                }
                 callbackContext.success();
             }
         };
