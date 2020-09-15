@@ -246,6 +246,8 @@ public class MCCordovaPlugin extends CordovaPlugin implements UrlHandler {
                 return init();
             case "requestPushPermission":
                 return requestPushPermission();
+            case "isLocationEnabled":
+                return isLocationEnabled();
             case "enableLocation":
                 return enableLocation();
             case "disableLocation":
@@ -309,6 +311,16 @@ public class MCCordovaPlugin extends CordovaPlugin implements UrlHandler {
             public void execute(MarketingCloudSdk sdk, JSONArray args, CallbackContext callbackContext) {
                 // No prompt for Android
                 callbackContext.success(1);
+            }
+        };
+    }
+
+    private ActionHandler isLocationEnabled() {
+        return new ActionHandler() {
+            @Override
+            public void execute(MarketingCloudSdk sdk, JSONArray args, CallbackContext callbackContext) {
+                boolean isLocationEnabled = sdk.getRegionMessageManager().isGeofenceMessagingEnabled();
+                callbackContext.success(isLocationEnabled ? 1 : 0);
             }
         };
     }

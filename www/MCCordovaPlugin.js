@@ -92,7 +92,7 @@ var MCCordovaPlugin = {
 
     /**
      * Enable location
-     * @param  {function(enabled)} successCallback
+     * @param  {function} successCallback
      * @param  {function} [errorCallback]
      * @see  {@link https://salesforce-marketingcloud.github.io/MarketingCloudSDK-Android/javadocs/7.0/reference/com/salesforce/marketingcloud/messages/push/PushMessageManager.html#isPushEnabled()|Android Docs}
      * @see  {@link https://salesforce-marketingcloud.github.io/MarketingCloudSDK-iOS/appledoc/Classes/MarketingCloudSDK.html#//api/name/sfmc_locationEnabled|iOS Docs}
@@ -104,7 +104,7 @@ var MCCordovaPlugin = {
 
     /**
      * Disable location
-     * @param  {function(enabled)} successCallback
+     * @param  {function} successCallback
      * @param  {function} [errorCallback]
      * @see  {@link https://salesforce-marketingcloud.github.io/MarketingCloudSDK-Android/javadocs/7.0/reference/com/salesforce/marketingcloud/messages/push/PushMessageManager.html#isPushEnabled()|Android Docs}
      * @see  {@link https://salesforce-marketingcloud.github.io/MarketingCloudSDK-iOS/appledoc/Classes/MarketingCloudSDK.html#//api/name/sfmc_locationEnabled|iOS Docs}
