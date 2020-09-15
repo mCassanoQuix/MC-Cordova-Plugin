@@ -154,6 +154,9 @@ public class MCSdkConfig {
                             builder.setDelayRegistrationUntilContactKeyIsSet(
                                 "true".equalsIgnoreCase(val));
                             break;
+                        case CONFIG_PREFIX + "location_enabled":
+                            builder.setGeofencingEnabled("true".equalsIgnoreCase(val));
+                            break;
                     }
                 }
             }
