@@ -36,26 +36,11 @@ const int LOG_LENGTH = 800;
 @synthesize cachedNotification;
 @synthesize initialized;
 
-+ (NSMutableDictionary *_Nullable)dataForNotificationReceived:(NSNotification *)notification {
++ (NSMutableDictionary *_Nullable)dataForUserInfo:(NSDictionary *)userInfo {
     NSMutableDictionary *notificationData = nil;
 
-    if (notification.userInfo != nil) {
-        if (@available(iOS 10.0, *)) {
-            UNNotificationRequest *userNotificationRequest =
-                notification.userInfo
-                    [@"SFMCFoundationUNNotificationReceivedNotificationKeyUNNotificationRequest"];
-            if (userNotificationRequest != nil) {
-                notificationData = [userNotificationRequest.content.userInfo mutableCopy];
-            }
-        }
-        if (notificationData == nil) {
-            NSDictionary *userNotificationUserInfo =
-                notification.userInfo[@"SFMCFoundationNotificationReceivedNotificationKeyUserInfo"];
-            notificationData = [userNotificationUserInfo mutableCopy];
-        }
-    }
-
-    if (notificationData != nil) {
+    if (userInfo != nil) {
+        notificationData = [userInfo mutableCopy];
         if ([notificationData[@"aps"] objectForKey:@"content-available"] != nil) {
             // Making the same assumption as the SDK would here.
             // if silent push, bail out so that the data is not returned as "notification opened"
@@ -83,7 +68,47 @@ const int LOG_LENGTH = 800;
         if (subtitle != nil) {
             [notificationData setValue:subtitle forKey:@"subtitle"];
         }
+        
+        NSString *url = nil;
+        NSString *type = nil;
+        if ((url = notificationData[@"_od"])) {
+            type = @"openDirect";
+        } else if ((url = notificationData[@"_x"])) {
+            type = @"cloudPage";
+        } else {
+            type = @"other";
+        }
+
+        if (url != nil) {
+            [notificationData setValue:url forKey:@"url"];
+        }
+        [notificationData setValue:type forKey:@"type"];
+
         [notificationData removeObjectForKey:@"aps"];
+    }
+
+    return notificationData;
+}
+
++ (NSMutableDictionary *_Nullable)dataForNotificationReceived:(NSNotification *)notification {
+    NSMutableDictionary *notificationData = nil;
+
+    if (notification.userInfo != nil) {
+        if (@available(iOS 10.0, *)) {
+            UNNotificationRequest *userNotificationRequest =
+                notification.userInfo
+                    [@"SFMCFoundationUNNotificationReceivedNotificationKeyUNNotificationRequest"];
+            if (userNotificationRequest != nil) {
+                // notificationData = [userNotificationRequest.content.userInfo mutableCopy];
+                notificationData = [MCCordovaPlugin dataForUserInfo: userNotificationRequest.content.userInfo];
+            }
+        }
+        if (notificationData == nil) {
+            NSDictionary *userNotificationUserInfo =
+                notification.userInfo[@"SFMCFoundationNotificationReceivedNotificationKeyUserInfo"];
+            // notificationData = [userNotificationUserInfo mutableCopy];
+            notificationData = [MCCordovaPlugin dataForUserInfo: userNotificationUserInfo];
+        }
     }
 
     return notificationData;
@@ -184,24 +209,8 @@ const int LOG_LENGTH = 800;
                             object:nil
                              queue:[NSOperationQueue mainQueue]
                         usingBlock:^(NSNotification *_Nonnull note) {
-                          NSMutableDictionary *userInfo =
-                              [MCCordovaPlugin dataForNotificationReceived:note];
+                          NSMutableDictionary *userInfo = [MCCordovaPlugin dataForNotificationReceived:note];
                           if (userInfo != nil) {
-                              NSString *url = nil;
-                              NSString *type = nil;
-                              if ((url = userInfo[@"_od"])) {
-                                  type = @"openDirect";
-                              } else if ((url = userInfo[@"_x"])) {
-                                  type = @"cloudPage";
-                              } else {
-                                  type = @"other";
-                              }
-
-                              if (url != nil) {
-                                  [userInfo setValue:url forKey:@"url"];
-                              }
-                              [userInfo setValue:type forKey:@"type"];
-
                               [self sendNotificationEvent:@{
                                   @"timeStamp" :
                                       @((long)([[NSDate date] timeIntervalSince1970] * 1000)),
@@ -210,6 +219,19 @@ const int LOG_LENGTH = 800;
                               }];
                           }
                         }];
+
+            UNNotificationRequest *lastNotificationRequest = [[MarketingCloudSDK sharedInstance] sfmc_notificationRequest];
+            if (lastNotificationRequest != nil && lastNotificationRequest.content != nil && lastNotificationRequest.content.userInfo != nil) {
+                NSDictionary *userInfo = [MCCordovaPlugin dataForUserInfo: lastNotificationRequest.content.userInfo];
+                if (userInfo != nil) {
+                    [self sendNotificationEvent:@{
+                        @"timeStamp" :
+                            @((long)([[NSDate date] timeIntervalSince1970] * 1000)),
+                        @"values" : userInfo,
+                        @"type" : @"notificationOpened"
+                    }];
+                }
+            }
         }
 
         self.initialized = YES;
