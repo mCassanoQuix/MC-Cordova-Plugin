@@ -1,5 +1,7 @@
 Change Log
 ==========
+### Version 7.5.0-c
+* Adds init, geofencing and types files
 ### Version 7.5.0
 * 7.4+ versions of the Android and iOS Marketing Cloud SDK are used in this version
 * Adds Behavioral Triggers for InApp Message functionality, see `track()`

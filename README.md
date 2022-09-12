@@ -62,6 +62,11 @@ Follow [these instructions](./ios_push.md) to enable push for iOS.
 
 * [MCCordovaPlugin](#module_MCCordovaPlugin)
     * _static_
+        * [.init(config, successCallback, [errorCallback])](#module_MCCordovaPlugin.init)
+        * [.requestPushPermission(successCallback, [errorCallback])](#module_MCCordovaPlugin.requestPushPermission)
+        * [.enableLocation(successCallback, [errorCallback])](#module_MCCordovaPlugin.enableLocation)
+        * [.disableLocation(successCallback, [errorCallback])](#module_MCCordovaPlugin.disableLocation)
+        * [.isLocationEnabled(successCallback, [errorCallback])](#module_MCCordovaPlugin.isLocationEnabled)
         * [.isPushEnabled(successCallback, [errorCallback])](#module_MCCordovaPlugin.isPushEnabled)
         * [.enablePush([successCallback], [errorCallback])](#module_MCCordovaPlugin.enablePush)
         * [.disablePush([successCallback], [errorCallback])](#module_MCCordovaPlugin.disablePush)
@@ -81,8 +86,8 @@ Follow [these instructions](./ios_push.md) to enable push for iOS.
         * [.logSdkState([successCallback], [errorCallback])](#module_MCCordovaPlugin.logSdkState)
         * [.track(eventName, attributesMap)](#module_MCCordovaPlugin.track)
     * _inner_
-        * [~notificationOpenedCallback](#module_MCCordovaPlugin..notificationOpenedCallback) : <code>function</code>
-        * [~urlActionCallback](#module_MCCordovaPlugin..urlActionCallback) : <code>function</code>
+        * [~notificationOpenedCallback](#module_MCCordovaPlugin.notificationOpenedCallback) : <code>function</code>
+        * [~urlActionCallback](#module_MCCordovaPlugin.urlActionCallback) : <code>function</code>
 
 
 ---
@@ -90,6 +95,72 @@ Follow [these instructions](./ios_push.md) to enable push for iOS.
 <a name="module_MCCordovaPlugin"></a>
 
 ## MCCordovaPlugin
+
+<a name="module_MCCordovaPlugin.init"></a>
+
+### MCCordovaPlugin.init(successCallback, [errorCallback])
+Initialize the Marketing Cloud SDK programmatically.
+
+**Kind**: static method of [<code>MCCordovaPlugin</code>](#module_MCCordovaPlugin)  
+**See**
+- [Android Docs](https://salesforce-marketingcloud.github.io/MarketingCloudSDK-Android/javadocs/MarketingCloudSdk/8.0/com.salesforce.marketingcloud/-marketing-cloud-config/index.html)
+- [iOS Docs](https://salesforce-marketingcloud.github.io/MarketingCloudSDK-iOS/appledoc/Classes/MarketingCloudSDK.html#//api/name/sfmc_configureWithDictionary:error:)
+
+| Param | Type | Description |
+| --- | --- | --- |
+| config | <code>Object</code> | Key-value map of configuration values. |
+| successCallback | <code>function</code> |  |
+| [errorCallback] | <code>function</code> |  |
+
+<a name="module_MCCordovaPlugin.requestPushPermission"></a>
+
+### MCCordovaPlugin.requestPushPermission(successCallback, [errorCallback])
+Request the user permission (iOS only).
+
+**Kind**: static method of [<code>MCCordovaPlugin</code>](#module_MCCordovaPlugin)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| successCallback | <code>function</code> |  |
+| [errorCallback] | <code>function</code> |  |
+
+<a name="module_MCCordovaPlugin.enableLocation"></a>
+
+### MCCordovaPlugin.enableLocation(successCallback, [errorCallback])
+Enable location.
+
+**Kind**: static method of [<code>MCCordovaPlugin</code>](#module_MCCordovaPlugin)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| successCallback | <code>function</code> |  |
+| [errorCallback] | <code>function</code> |  |
+
+<a name="module_MCCordovaPlugin.disableLocation"></a>
+
+### MCCordovaPlugin.disableLocation(successCallback, [errorCallback])
+Disable location.
+
+**Kind**: static method of [<code>MCCordovaPlugin</code>](#module_MCCordovaPlugin)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| successCallback | <code>function</code> |  |
+| [errorCallback] | <code>function</code> |  |
+
+<a name="module_MCCordovaPlugin.isLocationEnabled"></a>
+
+### MCCordovaPlugin.isLocationEnabled(successCallback, [errorCallback])
+The current state of the location flag in the native Marketing Cloud SDK.
+
+**Kind**: static method of [<code>MCCordovaPlugin</code>](#module_MCCordovaPlugin)  
+
+| Param | Type | Description |
+| --- | --- | --- |
+| successCallback | <code>function</code> |  |
+| successCallback.enabled | <code>boolean</code> | Whether location is enabled. |
+| [errorCallback] | <code>function</code> |  |
+
 <a name="module_MCCordovaPlugin.isPushEnabled"></a>
 
 ### MCCordovaPlugin.isPushEnabled(successCallback, [errorCallback])
