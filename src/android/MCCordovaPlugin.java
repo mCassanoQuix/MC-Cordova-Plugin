@@ -34,6 +34,7 @@ import androidx.annotation.Nullable;
 import com.salesforce.marketingcloud.MCLogListener;
 import com.salesforce.marketingcloud.MarketingCloudSdk;
 import com.salesforce.marketingcloud.UrlHandler;
+import com.salesforce.marketingcloud.events.EventManager;
 import com.salesforce.marketingcloud.notifications.NotificationManager;
 import com.salesforce.marketingcloud.notifications.NotificationMessage;
 
@@ -41,7 +42,11 @@ import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.io.OutputStreamWriter;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
+import java.util.ArrayList;
+import java.util.Iterator;
+import java.util.List;
 import org.apache.cordova.CallbackContext;
 import org.apache.cordova.CordovaInterface;
 import org.apache.cordova.CordovaPlugin;
@@ -53,7 +58,8 @@ import org.json.JSONObject;
 
 public class MCCordovaPlugin extends CordovaPlugin implements UrlHandler {
     static final String TAG = "~!MCCordova";
-
+    private static final String EXTRA_MESSAGE =
+        "com.salesforce.marketingcloud.notifications.EXTRA_MESSAGE";
     private CallbackContext eventsChannel = null;
     private PluginResult cachedNotificationOpenedResult = null;
     private boolean notificationOpenedSubscribed = false;
@@ -76,6 +82,35 @@ public class MCCordovaPlugin extends CordovaPlugin implements UrlHandler {
             }
         }
         return data;
+    }
+
+    private static Map<String, Object> toMap(JSONObject jsonobj)  throws JSONException {
+        Map<String, Object> map = new HashMap<String, Object>();
+        Iterator<String> keys = jsonobj.keys();
+        while(keys.hasNext()) {
+            String key = keys.next();
+            Object value = jsonobj.get(key);
+            if (value instanceof JSONArray) {
+                value = toList((JSONArray) value);
+            } else if (value instanceof JSONObject) {
+                value = toMap((JSONObject) value);
+            }   
+            map.put(key, value);
+        }   return map;
+    }
+
+    private static List<Object> toList(JSONArray array) throws JSONException {
+        List<Object> list = new ArrayList<Object>();
+        for(int i = 0; i < array.length(); i++) {
+            Object value = array.get(i);
+            if (value instanceof JSONArray) {
+                value = toList((JSONArray) value);
+            }
+            else if (value instanceof JSONObject) {
+                value = toMap((JSONObject) value);
+            }
+            list.add(value);
+        }   return list;
     }
 
     @Nullable
@@ -101,14 +136,20 @@ public class MCCordovaPlugin extends CordovaPlugin implements UrlHandler {
     @Override
     public void initialize(CordovaInterface cordova, CordovaWebView webView) {
         MCSdkListener.INSTANCE.urlHandler = this;
-        handleNotificationMessage(
-            NotificationManager.extractMessage(cordova.getActivity().getIntent()));
+
+        Intent intent = cordova.getActivity().getIntent();
+        if (intent != null && intent.hasExtra(EXTRA_MESSAGE)) {
+            handleNotificationMessage(NotificationManager.extractMessage(intent));
+        }
     }
 
     @Override
     public void onNewIntent(Intent intent) {
         super.onNewIntent(intent);
-        handleNotificationMessage(NotificationManager.extractMessage(intent));
+
+        if (intent != null && intent.hasExtra(EXTRA_MESSAGE)) {
+            handleNotificationMessage(NotificationManager.extractMessage(intent));
+        }
     }
 
     private void handleNotificationMessage(@Nullable NotificationMessage message) {
@@ -278,6 +319,8 @@ public class MCCordovaPlugin extends CordovaPlugin implements UrlHandler {
                 return getContactKey();
             case "logSdkState":
                 return logSdkState();
+            case "track":
+                return track();
             default:
                 return null;
         }
@@ -502,6 +545,24 @@ public class MCCordovaPlugin extends CordovaPlugin implements UrlHandler {
                 MarketingCloudSdk sdk, JSONArray args, CallbackContext callbackContext) {
                 log("MCSDK STATE", sdk.getSdkState().toString());
                 callbackContext.success();
+            }
+        };
+    }
+
+    private ActionHandler track() {
+        return new ActionHandler() {
+            @Override
+            public void execute(
+                MarketingCloudSdk sdk, JSONArray args, CallbackContext callbackContext) {
+                try {
+                    sdk.getEventManager().track(
+                        EventManager.customEvent(args.getString(0), MCCordovaPlugin.toMap(args.getJSONObject(1))));
+                    callbackContext.success();
+                    // log("TRACK", "EVENT: " + args.getString(0) + ", ATTRIBUTES: " + args.get(1).toString());
+                } catch (Exception e) {
+                    // NO-OP
+                    callbackContext.error(e.getMessage());
+                }
             }
         };
     }

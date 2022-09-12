@@ -79,6 +79,7 @@ Follow [these instructions](./ios_push.md) to enable push for iOS.
         * [.setOnNotificationOpenedListener(notificationOpenedListener)](#module_MCCordovaPlugin.setOnNotificationOpenedListener)
         * [.setOnUrlActionListener(urlActionListener)](#module_MCCordovaPlugin.setOnUrlActionListener)
         * [.logSdkState([successCallback], [errorCallback])](#module_MCCordovaPlugin.logSdkState)
+        * [.track(eventName, attributesMap)](#module_MCCordovaPlugin.track)
     * _inner_
         * [~notificationOpenedCallback](#module_MCCordovaPlugin..notificationOpenedCallback) : <code>function</code>
         * [~urlActionCallback](#module_MCCordovaPlugin..urlActionCallback) : <code>function</code>
@@ -378,6 +379,24 @@ the SDK and will be requested by the Marketing Cloud support team.
 | [successCallback] | <code>function</code> | 
 | [errorCallback] | <code>function</code> | 
 
+<a name="module_MCCordovaPlugin.track"></a>
+
+### MCCordovaPlugin.track(eventName, attributesMap)
+Method to track events, which could result in actions such as an InApp Message being
+displayed.
+
+**Kind**: static method of [<code>MCCordovaPlugin</code>](#module_MCCordovaPlugin)  
+**See**
+
+- [Android Docs](https://salesforce-marketingcloud.github.io/MarketingCloudSDK-Android/javadocs/MarketingCloudSdk/7.4/com.salesforce.marketingcloud.events/-event-manager/custom-event.html)
+- [iOS Docs](https://salesforce-marketingcloud.github.io/MarketingCloudSDK-iOS/appledoc/Classes/SFMCEvent.html#/c:objc(cs)SFMCEvent(cm)customEventWithName:withAttributes:)
+
+
+| Param | Type | Description |
+| --- | --- | --- |
+| eventName | <code>string</code> | The name of the event to be tracked. |
+| attributesMap | <code>string</code> | key-value pairs of attributes associated with the Event. |
+
 <a name="module_MCCordovaPlugin..notificationOpenedCallback"></a>
 
 ### MCCordovaPlugin~notificationOpenedCallback : <code>function</code>
@@ -403,3 +422,6 @@ the SDK and will be requested by the Marketing Cloud support team.
 
 ---
 
+
+### 3rd Party Product Language Disclaimers
+Where possible, we changed noninclusive terms to align with our company value of Equality. We retained noninclusive terms to document a third-party system, but we encourage the developer community to embrace more inclusive language. We can update the term when it’s no longer required for technical accuracy.
